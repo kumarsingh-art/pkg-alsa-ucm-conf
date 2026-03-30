@@ -1,3 +1,10 @@
+alsa-ucm-conf (1.2.15.3-1ubuntu1) resolute; urgency=medium
+
+  * Add support for CS42L43B variant (LP: #2146747)
+    - d/p/lp2146747-ucm2-sof-soundwire-Add-support-for-CS42L43B-variant.patch
+
+ -- Kai-Chuan Hsieh <kaichuan.hsieh@canonical.com>  Mon, 30 Mar 2026 11:02:36 +0800
+
 alsa-ucm-conf (1.2.15.3-1) unstable; urgency=medium
 
   * New upstream release.

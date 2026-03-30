@@ -1,0 +1,175 @@
+From 67c5adadda2ec9b8a42eff566ba5daf4655a54de Mon Sep 17 00:00:00 2001
+From: Maciej Strozek <mstrozek@opensource.cirrus.com>
+Date: Thu, 18 Dec 2025 09:23:56 +0000
+Subject: [PATCH] ucm2: sof-soundwire: Add support for CS42L43B variant
+
+From UCM point of view CS42L43B codec adds 2 new decimators and removes
+a control to change Decimator 1 mode from base CS42L43. Thus reuse
+CS42L43 files, and guard the CS42L43B additions behind a condition
+that the new Decimator controls exist.
+
+Closes: https://github.com/alsa-project/alsa-ucm-conf/pull/665
+Link: https://lore.kernel.org/all/20260306152829.3130530-1-mstrozek@opensource.cirrus.com/
+Signed-off-by: Maciej Strozek <mstrozek@opensource.cirrus.com>
+Signed-off-by: Jaroslav Kysela <perex@perex.cz>
+Origin: upstream, https://github.com/alsa-project/alsa-ucm-conf/pull/665/changes/db6b33fb0e976d54a65202246e39c5093a3f48c4
+Bug-Ubuntu: https://bugs.launchpad.net/bugs/2146747
+---
+ ucm2/codecs/cs42l43-dmic/init.conf   | 62 ++++++++++++++++++++++------
+ ucm2/sof-soundwire/cs42l43-dmic.conf | 31 +++++++++++---
+ ucm2/sof-soundwire/cs42l43.conf      | 12 +++++-
+ 3 files changed, 86 insertions(+), 19 deletions(-)
+
+diff --git a/ucm2/codecs/cs42l43-dmic/init.conf b/ucm2/codecs/cs42l43-dmic/init.conf
+index e8df2c1..ea91fa4 100644
+--- a/ucm2/codecs/cs42l43-dmic/init.conf
++++ b/ucm2/codecs/cs42l43-dmic/init.conf
+@@ -1,18 +1,5 @@
+ # cs42l43 specific control settings
+ 
+-LibraryConfig.remap.Config {
+-	ctl.default.map {
+-		"name='cs42l43 Microphone Capture Switch'" {
+-			"name='cs42l43 Decimator 3 Switch'".vindex.0 0
+-			"name='cs42l43 Decimator 4 Switch'".vindex.1 0
+-		}
+-		"name='cs42l43 Microphone Capture Volume'" {
+-			"name='cs42l43 Decimator 3 Volume'".vindex.0 0
+-			"name='cs42l43 Decimator 4 Volume'".vindex.1 0
+-		}
+-	}
+-}
+-
+ BootSequence [
+ 	cset "name='cs42l43 Decimator 3 Switch' 0"
+ 	cset "name='cs42l43 Decimator 4 Switch' 0"
+@@ -22,3 +9,52 @@ Macro [
+ 	{ SetLED { LED="mic" Action="attach" CtlId="cs42l43 Decimator 3 Switch" } }
+ 	{ SetLED { LED="mic" Action="attach" CtlId="cs42l43 Decimator 4 Switch" } }
+ ]
++
++If.CS42L43B {
++	Condition {
++		Type ControlExists
++		Control "name='cs42l43 Decimator 5 Switch'"
++	}
++	True {
++		LibraryConfig.remap.Config {
++			ctl.default.map {
++				"name='cs42l43 Microphone Capture Switch'" {
++					"name='cs42l43 Decimator 5 Switch'".vindex.0 0
++					"name='cs42l43 Decimator 6 Switch'".vindex.1 0
++					"name='cs42l43 Decimator 3 Switch'".vindex.2 0
++					"name='cs42l43 Decimator 4 Switch'".vindex.3 0
++				}
++				"name='cs42l43 Microphone Capture Volume'" {
++					"name='cs42l43 Decimator 5 Volume'".vindex.0 0
++					"name='cs42l43 Decimator 6 Volume'".vindex.1 0
++					"name='cs42l43 Decimator 3 Volume'".vindex.2 0
++					"name='cs42l43 Decimator 4 Volume'".vindex.3 0
++				}
++			}
++		}
++
++		BootSequence [
++			cset "name='cs42l43 Decimator 5 Switch' 0"
++			cset "name='cs42l43 Decimator 6 Switch' 0"
++		]
++
++		Macro [
++			{ SetLED { LED="mic" Action="attach" CtlId="cs42l43 Decimator 5 Switch" } }
++			{ SetLED { LED="mic" Action="attach" CtlId="cs42l43 Decimator 6 Switch" } }
++		]
++	}
++	False {
++		LibraryConfig.remap.Config {
++			ctl.default.map {
++				"name='cs42l43 Microphone Capture Switch'" {
++					"name='cs42l43 Decimator 3 Switch'".vindex.0 0
++					"name='cs42l43 Decimator 4 Switch'".vindex.1 0
++				}
++				"name='cs42l43 Microphone Capture Volume'" {
++					"name='cs42l43 Decimator 3 Volume'".vindex.0 0
++					"name='cs42l43 Decimator 4 Volume'".vindex.1 0
++				}
++			}
++		}
++	}
++}
+diff --git a/ucm2/sof-soundwire/cs42l43-dmic.conf b/ucm2/sof-soundwire/cs42l43-dmic.conf
+index b68a70d..c0b622c 100644
+--- a/ucm2/sof-soundwire/cs42l43-dmic.conf
++++ b/ucm2/sof-soundwire/cs42l43-dmic.conf
+@@ -7,16 +7,37 @@ SectionDevice."Mic" {
+ 		"Headset"
+ 	]
+ 
+-	EnableSequence [
+-		cset "name='cs42l43 DP1TX1 Input' 'Decimator 3'"
+-		cset "name='cs42l43 DP1TX2 Input' 'Decimator 4'"
+-	]
+-
+ 	DisableSequence [
+ 		cset "name='cs42l43 DP1TX1 Input' 'None'"
+ 		cset "name='cs42l43 DP1TX2 Input' 'None'"
+ 	]
+ 
++	If.CS42L43B {
++		Condition {
++			Type ControlExists
++			Control "name='cs42l43 Decimator 5 Switch'"
++		}
++		True {
++			EnableSequence [
++				cset "name='cs42l43 DP1TX1 Input' 'Decimator 5'"
++				cset "name='cs42l43 DP1TX2 Input' 'Decimator 6'"
++				cset "name='cs42l43 DP1TX3 Input' 'Decimator 3'"
++				cset "name='cs42l43 DP1TX4 Input' 'Decimator 4'"
++			]
++
++			DisableSequence [
++				cset "name='cs42l43 DP1TX3 Input' 'None'"
++				cset "name='cs42l43 DP1TX4 Input' 'None'"
++			]
++		}
++		False {
++			EnableSequence [
++				cset "name='cs42l43 DP1TX1 Input' 'Decimator 3'"
++				cset "name='cs42l43 DP1TX2 Input' 'Decimator 4'"
++			]
++		}
++	}
++
+ 	Value {
+ 		CapturePriority 100
+ 		CapturePCM "hw:${CardId},4"
+diff --git a/ucm2/sof-soundwire/cs42l43.conf b/ucm2/sof-soundwire/cs42l43.conf
+index 5183212..b9e7b30 100644
+--- a/ucm2/sof-soundwire/cs42l43.conf
++++ b/ucm2/sof-soundwire/cs42l43.conf
+@@ -26,11 +26,21 @@ SectionDevice."Headset" {
+ 
+ 	EnableSequence [
+ 		cset "name='cs42l43 ADC1 Input' 'IN1'"
+-		cset "name='cs42l43 Decimator 1 Mode' 'ADC'"
+ 
+ 		cset "name='cs42l43 DP2TX1 Input' 'Decimator 1'"
+ 		cset "name='cs42l43 DP2TX2 Input' 'Decimator 1'"
+ 	]
++	If.CS42L43B {
++		Condition {
++			Type ControlExists
++			Control "name='cs42l43 Decimator 5 Switch'"
++		}
++		False {
++			EnableSequence [
++				cset "name='cs42l43 Decimator 1 Mode' 'ADC'"
++			]
++		}
++	}
+ 
+ 	DisableSequence [
+ 		cset "name='cs42l43 DP2TX1 Input' 'None'"
+-- 
+2.43.0
+
