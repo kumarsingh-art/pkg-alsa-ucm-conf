@@ -1,3 +1,63 @@
+alsa-ucm-conf (1.2.15.3-1ubuntu1.7) resolute; urgency=medium
+
+  [ Dirk Su ]
+  * Fix the index of DGX ALC4080 front Mic detection patch  (LP: #2164728)
+
+ -- Dirk Su <dirk.su@canonical.com>  Tue, 15 Sep 2026 14:16:29 +0800
+
+alsa-ucm-conf (1.2.15.3-1ubuntu1.6) resolute; urgency=medium
+
+  [ Dirk Su ]
+  * Nvidia DGX station ALC4080 front microphone detection (LP: #2164728)
+   - d/p/lp2164728-USB-Audio-ALC4080-Update-NVIDIA-DGX-front-mic-jack-n.patch
+  * system with TI tas2783 amplifier has no sound output (LP: #2164729)
+   - d/p/lp2164729-ucm2-sof-soundwire-Add-tas2783-support.patch
+
+ -- Dirk Su <dirk.su@canonical.com>  Mon, 24 Aug 2026 14:30:25 +0800
+
+alsa-ucm-conf (1.2.15.3-1ubuntu1.5) resolute; urgency=medium
+
+  [ Thomas Chen ]
+  * Fix "No input and output for rt713 + rt1320 codec" (LP: #2159957)
+    - d/p/lp2159957-rt713-rt1320-fix-input-output.patch
+
+ -- Thomas Chen <thomas.chen@canonical.com>  Wed, 08 Jul 2026 14:52:47 +0800
+
+alsa-ucm-conf (1.2.15.3-1ubuntu1.4) resolute; urgency=medium
+
+  [ Kai-Chuan Hsieh ]
+  * Add Nvidia GB300 ALC4080 support (LP: #2154151)
+    - d/p/lp2154151-Add-support-for-ASUS-Pro-ET900N-G3-Station-GB300.patch
+
+  [ Aaron Ma ]
+  * Add SoundWire ACP DMIC, companion amplifier, RT722 speaker mute,
+    cs42l43 speaker init split, combined cs42l43-spk+cs35l56 speaker,
+    and ACP DMIC LED UCM support. (LP: #2154418)
+    - d/p/lp2154418/0001-ucm2-sof-soundwire-add-ACP-DMIC-configuration.patch
+    - d/p/lp2154418/0001-sof-soundwire-add-companion-amp-config-with-rt721-an.patch
+    - d/p/lp2154418/0001-ucm2-rt722-add-speaker-mute-LED-and-PlaybackSwitch-f.patch
+    - d/p/lp2154418/0001-ucm2-sof-soundwire-cs42l43-Separate-init-handling-of.patch
+    - d/p/lp2154418/0001-ucm2-sof-soundwire-add-combined-cs42l43-spk-cs35l56-.patch
+    - d/p/lp2154418/0001-ucm2-sof-soundwire-add-Mic-LED-control-for-ACP-PDM-D.patch
+
+ -- Aaron Ma <aaron.ma@canonical.com>  Tue, 02 Jun 2026 11:46:49 +0800
+
+alsa-ucm-conf (1.2.15.3-1ubuntu1.2) resolute; urgency=medium
+
+  * Add support for CS42L43B variant (LP: #2146747)
+    - d/p/lp2146747-ucm2-sof-soundwire-cs42l43-support-UAJ-less-configur.patch
+
+ -- Kai-Chuan Hsieh <kaichuan.hsieh@canonical.com>  Wed, 06 May 2026 12:27:28 +0200
+
+alsa-ucm-conf (1.2.15.3-1ubuntu1.1) resolute; urgency=medium
+
+  * Add rt1320 and rt722 support for sof-soundwire (LP: #2150196)
+    - d/p/lp2150196/0001-sof-soundwire-rt1320-add-playback-control-switch.patch
+    - d/p/lp2150196/0002-sof-soundwire-rt1320-add-rt1320-dmic-config.patch
+    - d/p/lp2150196/0003-sof-soundwire-add-rt722-into-hs_init.patch
+
+ -- Aaron Ma <aaron.ma@canonical.com>  Sat, 25 Apr 2026 13:58:12 +0800
+
 alsa-ucm-conf (1.2.15.3-1ubuntu1) resolute; urgency=medium
 
   * Add support for CS42L43B variant (LP: #2146747)

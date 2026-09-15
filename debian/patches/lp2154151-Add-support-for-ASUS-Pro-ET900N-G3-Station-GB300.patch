@@ -1,0 +1,54 @@
+From c143b2fd19a21965e14480c74032e65b3717c49a Mon Sep 17 00:00:00 2001
+From: Kenny4_Lin <Kenny4_Lin@asus.com>
+Date: Thu, 7 May 2026 08:37:37 +0000
+Subject: [PATCH] Add support for ASUS Pro ET900N G3 - Station GB300 platform.
+
+This enables:
+- Front panel line out
+- Front panel mic in
+
+Signed-off-by: Kenny4 <Kenny4_Lin@asus.com>
+Ubuntu-Bug: https://bugs.launchpad.net/bugs/2154151
+Origin: vendor, https://github.com/alsa-project/alsa-ucm-conf/pull/757
+--- a/ucm2/USB-Audio/Realtek/ALC4080-HiFi.conf
++++ b/ucm2/USB-Audio/Realtek/ALC4080-HiFi.conf
+@@ -172,6 +172,27 @@
+ 	}
+ }
+ 
++If.nvidia-dgx-station {
++	Condition {
++		Type RegexMatch
++		String "${CardComponents}"
++		Regex "USB(0955:cf0a)"
++	}
++	True.Define {
++		HeadphonesName "Front Line Out"
++		Mic1Name "Front Microphone"
++		Mic1Mindex "1"
++		Mic1Jack "name='Mic - Input Jack',index=1"
++		Mic2Name "Rear Microphone"
++		Mic2Mixer "Mic"
++		Mic2Mindex "0"
++		Mic2Jack "Mic - Input Jack"
++		Mic2PCM "hw:${CardId}"
++		Line1Name "Rear Line Input"
++		SpdifName ""
++	}
++}
++
+ SectionVerb {
+ 	EnableSequence [
+ 		disdevall ""
+--- a/ucm2/USB-Audio/USB-Audio.conf
++++ b/ucm2/USB-Audio/USB-Audio.conf
+@@ -109,7 +109,8 @@
+ 		# 26ce:0a06 ASRock X670E/Z790 Taichi
+ 		# 26ce:0a08 ASRock Z790 PG-ITX/TB4, X870 Steel Legend
+ 		# 26ce:0a0b ASRock X870E Taichi
+-		Regex "USB((0414:a0(0e|1[0124]))|(0b05:(19(84|9[69])|1a(16|2[07]|5[23c]|97|f1)|1b(7c|9b|e1)))|(0db0:(005a|0b58|124b|151f|1feb|3130|36e7|4(19c|22d|240|88c)|543d|62a4|6c[0c]9|70d3|7696|82c7|8af7|961e|9e6d|a(073|228|47c|74b)|b202|c(c78|d0e)|d1d7|d6e7|e1f8))|(26ce:0a0[68b]))"
++                # 0955:cf0a NVIDIA GB300 USB Audio
++		Regex "USB((0414:a0(0e|1[0124]))|(0b05:(19(84|9[69])|1a(16|2[07]|5[23c]|97|f1)|1b(7c|9b|e1)))|(0db0:(005a|0b58|124b|151f|1feb|3130|36e7|4(19c|22d|240|88c)|543d|62a4|6c[0c]9|70d3|7696|82c7|8af7|961e|9e6d|a(073|228|47c|74b)|b202|c(c78|d0e)|d1d7|d6e7|e1f8))|(26ce:0a0[68b])|(0955:cf0a))"
+ 	}
+ 	True.Define.ProfileName "Realtek/ALC4080"
+ }

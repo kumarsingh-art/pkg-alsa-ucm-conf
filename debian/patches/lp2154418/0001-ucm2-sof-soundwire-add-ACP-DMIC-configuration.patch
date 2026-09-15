@@ -1,0 +1,36 @@
+From fb35cbd82aa516af373b874af64a87af093e6328 Mon Sep 17 00:00:00 2001
+From: "Chaitanya Krishna.J" <ChaitanyaKrishna.J@amd.com>
+Date: Mon, 23 Mar 2026 18:17:59 +0530
+Subject: [PATCH] ucm2: sof-soundwire: add ACP DMIC configuration
+
+add acp-dmic.conf to the sof-soundwire configuration tree to enable
+the ACP digital microphone (DMIC) endpoint for AMD SoundWire platforms.
+
+Closes: https://github.com/alsa-project/alsa-ucm-conf/pull/732
+Suggested-by: Jaroslav Kysela <perex@perex.cz>
+Signed-off-by: Chaitanya Krishna.J <ChaitanyaKrishna.J@amd.com>
+Signed-off-by: Jaroslav Kysela <perex@perex.cz>
+Origin: upstream, https://github.com/alsa-project/alsa-ucm-conf/commit/fb35cbd82aa516af373b874af64a87af093e6328
+Bug-Ubuntu: https://bugs.launchpad.net/bugs/2154418
+---
+ ucm2/sof-soundwire/acp-dmic.conf | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+ create mode 100644 ucm2/sof-soundwire/acp-dmic.conf
+
+diff --git a/ucm2/sof-soundwire/acp-dmic.conf b/ucm2/sof-soundwire/acp-dmic.conf
+new file mode 100644
+index 0000000..342fff0
+--- /dev/null
++++ b/ucm2/sof-soundwire/acp-dmic.conf
+@@ -0,0 +1,8 @@
++SectionDevice."Mic" {
++	Comment "Digital Microphone"
++
++	Value {
++		CapturePriority 100
++		CapturePCM "hw:${CardId},4"
++	}
++}
+-- 
+2.43.0
+

@@ -1,0 +1,723 @@
+--- a/ucm2/codecs/rt1320/init.conf
++++ b/ucm2/codecs/rt1320/init.conf
+@@ -16,7 +16,7 @@
+ 	Condition {
+ 		Type String
+ 		Needle "rt1320"
+-		Haystack "${var:MultiSpeakerShadow}"
++		Haystack "${var:SpeakerCodec1}"
+ 	}
+ 	True {
+ 		Macro.num1.rt1320spkled { ForAmps "[12]" Amp 1 }
+@@ -83,7 +83,7 @@
+ 	Condition {
+ 		Type String
+ 		Needle "rt1320"
+-		Haystack "${var:MultiMicShadow}"
++		Haystack "${var:MicCodec1}"
+ 	}
+ 	True {
+ 		Macro.num1.rt1320micled { ForMics "[12]" Mic 1 }
+--- a/ucm2/codecs/rt712-dmic/init.conf
++++ /dev/null
+@@ -1,6 +0,0 @@
+-# RT712-dmic specific volume control settings
+-
+-BootSequence [
+-	cset "name='rt712-dmic ADC 25 Mux' 'DMIC1'"
+-	cset "name='rt712-dmic FU1E Capture Switch' 1"
+-]
+--- a/ucm2/codecs/rt712/init.conf
++++ b/ucm2/codecs/rt712/init.conf
+@@ -7,11 +7,24 @@
+ 	cset "name='rt712 FU0F Capture Switch' 1"
+ ]
+ 
++If.rt712dmic_init {
++	Condition {
++		Type String
++		String1 "rt712-dmic"
++		String2 "${var:MicCodec1}"
++	}
++	True.BootSequence [
++		cset "name='rt712-dmic ADC 25 Mux' 'DMIC1'"
++		cset "name='rt712-dmic FU1E Capture Switch' 1"
++	]
++}
++
+ If.rt712vb_init {
+ 	Condition {
+ 		Type RegexMatch
+-		Regex "(rt712(-sdca)?)"
+-		String "${var:MultiMicShadow}"
++		# guard with '=' to avoid empty or rt712-dmic string matching
++		Regex "=(rt712(-sdca)?)="
++		String "=${var:MicCodec1}="
+ 	}
+ 	True.BootSequence [
+ 		# RT712-VB integrated with DMIC
+--- a/ucm2/codecs/rt713-dmic/init.conf
++++ /dev/null
+@@ -1,6 +0,0 @@
+-# RT713-dmic specific volume control settings
+-
+-BootSequence [
+-	cset "name='rt713-dmic ADC 25 Mux' 'DMIC1'"
+-	cset "name='rt713-dmic FU1E Capture Switch' 1"
+-]
+--- a/ucm2/codecs/rt713/init.conf
++++ b/ucm2/codecs/rt713/init.conf
+@@ -7,11 +7,23 @@
+ 	cset "name='rt713 FU0F Capture Switch' 1"
+ ]
+ 
++If.rt713dmic_init {
++	Condition {
++		Type String
++		String1 "rt713-dmic"
++		String2 "${var:MicCodec1}"
++	}
++	True.BootSequence [
++		cset "name='rt713-dmic ADC 25 Mux' 'DMIC1'"
++		cset "name='rt713-dmic FU1E Capture Switch' 1"
++	]
++}
++
+ If.rt713vb_init {
+ 	Condition {
+ 		Type String
+ 		String1 "rt713"
+-		String2 "${var:MultiMicShadow}"
++		String2 "${var:MicCodec1}"
+ 	}
+ 	True.BootSequence [
+ 		# RT713-VB integrated with DMIC
+--- a/ucm2/sof-soundwire/HiFi.conf
++++ b/ucm2/sof-soundwire/HiFi.conf
+@@ -8,36 +8,43 @@
+ 	Value.TQ "HiFi"
+ }
+ 
+-If.multicodec {
++If.spk {
+ 	Condition {
+ 		Type String
+-		Empty "${var:MultiCodec1}"
++		Empty "${var:SpeakerCodecFile}"
+ 	}
+-	False.Include.multicodec.File "/sof-soundwire/${var:MultiCodec1}.conf"
++	False.Include.a.File "/sof-soundwire/${var:SpeakerCodecFile}.conf"
+ }
+ 
+-If.spkdev {
++If.mic {
+ 	Condition {
+ 		Type String
+-		Empty "${var:SpeakerCodec1}"
++		Empty "${var:MicCodecFile}"
+ 	}
+-	False.Include.spkdev.File "/sof-soundwire/${var:SpeakerCodec1}.conf"
+-}
+-
+-If.micdev {
+-	Condition {
+-		Type String
+-		Empty "${var:MicCodec1}"
++	False.If.dup {
++		Condition {
++			Type String
++			String1 "${var:MicCodecFile}"
++			String2 "${var:SpeakerCodecFile}"
++		}
++		False.Include.a.File "/sof-soundwire/${var:MicCodecFile}.conf"
+ 	}
+-	False.Include.micdev.File "/sof-soundwire/${var:MicCodec1}.conf"
+ }
+ 
+-If.hsdev {
++If.headset {
+ 	Condition {
+ 		Type String
+-		Empty "${var:HeadsetCodec1}"
++		Empty "${var:HeadsetCodecFile}"
++	}
++	False.If.dup {
++		Condition {
++			Type String
++			# guard with "=" to avoid empty string matching
++			Needle "=${var:HeadsetCodecFile}="
++			Haystack "=${var:SpeakerCodecFile}=${var:MicCodecFile}="
++		}
++		False.Include.a.File "/sof-soundwire/${var:HeadsetCodecFile}.conf"
+ 	}
+-	False.Include.hsdev.File "/sof-soundwire/${var:HeadsetCodec1}.conf"
+ }
+ 
+ <sof-soundwire/Hdmi.conf>
+--- a/ucm2/sof-soundwire/rt1320.conf
++++ b/ucm2/sof-soundwire/rt1320.conf
+@@ -71,7 +71,7 @@
+ 	Condition {
+ 		Type String
+ 		Needle "rt1320"
+-		Haystack "${var:MultiMicShadow}"
++		Haystack "${var:MicCodec1}"
+ 	}
+ 	True {
+ 		SectionDevice."Mic" {
+--- a/ucm2/sof-soundwire/rt712-dmic.conf
++++ /dev/null
+@@ -1,21 +0,0 @@
+-# Use case Configuration for sof-soundwire card
+-
+-SectionDevice."Mic" {
+-	Comment	"SoundWire microphones"
+-
+-	EnableSequence [
+-		cset "name='rt712-dmic FU1E Capture Switch' 1"
+-	]
+-
+-	DisableSequence [
+-		cset "name='rt712-dmic FU1E Capture Switch' 0"
+-	]
+-
+-	Value {
+-		CapturePriority 100
+-		CapturePCM "hw:${CardId},4"
+-		CaptureSwitch "rt712-dmic FU1E Capture Switch"
+-		CaptureVolume "rt712-dmic FU1E Capture Volume"
+-		CaptureMixerElem "rt712-dmic FU1E"
+-	}
+-}
+--- a/ucm2/sof-soundwire/rt712.conf
++++ b/ucm2/sof-soundwire/rt712.conf
+@@ -1,10 +1,10 @@
+ # Use case Configuration for sof-soundwire card
+ 
+-If.codecspk {
++If.codec_spk {
+ 	Condition {
+ 		Type RegexMatch
+ 		Regex "(rt712(-sdca)?)"
+-		String "${var:MultiSpeakerShadow}"
++		String "${var:SpeakerCodec1}"
+ 	}
+ 	True {
+ 		SectionDevice."Speaker" {
+@@ -47,50 +47,89 @@
+ 	}
+ }
+ 
+-SectionDevice."Headphones" {
+-	Comment	"Headphones"
++If.codec_hs {
++	Condition {
++		Type RegexMatch
++		Regex "(rt712(-sdca)?)"
++		String "${var:HeadsetCodec1}"
++	}
++	True {
++		SectionDevice."Headphones" {
++			Comment	"Headphones"
++
++			EnableSequence [
++				cset "name='Headphone Switch' on"
++			]
++
++			DisableSequence [
++				cset "name='Headphone Switch' off"
++			]
++
++			Value {
++			      PlaybackPriority 200
++			      PlaybackPCM "hw:${CardId}"
++			      JackControl "Headphone Jack"
++			}
++		}
++
++		SectionDevice."Headset" {
++			Comment "Headset Mono Microphone"
++
++			EnableSequence [
++				cset "name='rt712 FU0F Capture Switch' on"
++			]
++
++			DisableSequence [
++				cset "name='rt712 FU0F Capture Switch' off"
++			]
+ 
+-	EnableSequence [
+-		cset "name='Headphone Switch' on"
+-	]
+-
+-	DisableSequence [
+-		cset "name='Headphone Switch' off"
+-	]
+-
+-	Value {
+-	      PlaybackPriority 200
+-	      PlaybackPCM "hw:${CardId}"
+-	      JackControl "Headphone Jack"
++			Value {
++				CapturePriority 300
++				CapturePCM "hw:${CardId},1"
++				CaptureSwitch "rt712 FU0F Capture Switch"
++				CaptureVolume "rt712 FU0F Capture Volume"
++				CaptureMixerElem "rt712 FU0F"
++				JackControl "Headset Mic Jack"
++			}
++		}
+ 	}
+ }
+ 
+-SectionDevice."Headset" {
+-	Comment "Headset Mono Microphone"
++If.codec_dmic {
++	Condition {
++		Type String
++		String1 "rt712-dmic"
++		String2 "${var:MicCodec1}"
++	}
++	True {
++		SectionDevice."Mic" {
++			Comment	"SoundWire microphones"
++
++			EnableSequence [
++				cset "name='rt712-dmic FU1E Capture Switch' 1"
++			]
++
++			DisableSequence [
++				cset "name='rt712-dmic FU1E Capture Switch' 0"
++			]
+ 
+-	EnableSequence [
+-		cset "name='rt712 FU0F Capture Switch' on"
+-	]
+-
+-	DisableSequence [
+-		cset "name='rt712 FU0F Capture Switch' off"
+-	]
+-
+-	Value {
+-		CapturePriority 300
+-		CapturePCM "hw:${CardId},1"
+-		CaptureSwitch "rt712 FU0F Capture Switch"
+-		CaptureVolume "rt712 FU0F Capture Volume"
+-		CaptureMixerElem "rt712 FU0F"
+-		JackControl "Headset Mic Jack"
++			Value {
++				CapturePriority 100
++				CapturePCM "hw:${CardId},4"
++				CaptureSwitch "rt712-dmic FU1E Capture Switch"
++				CaptureVolume "rt712-dmic FU1E Capture Volume"
++				CaptureMixerElem "rt712-dmic FU1E"
++			}
++		}
+ 	}
+ }
+ 
+-If.codecmic {
++If.codec_mic {
+ 	Condition {
+ 		Type RegexMatch
+-		Regex "(rt712(-sdca)?)"
+-		String "${var:MultiMicShadow}"
++		# guard with '=' to avoid empty or rt712-dmic string matching
++		Regex "=(rt712(-sdca)?)="
++		String "=${var:MicCodec1}="
+ 	}
+ 	True {
+ 		SectionDevice."Mic" {
+--- a/ucm2/sof-soundwire/rt713-dmic.conf
++++ /dev/null
+@@ -1,21 +0,0 @@
+-# Use case Configuration for sof-soundwire card
+-
+-SectionDevice."Mic" {
+-	Comment	"SoundWire microphones"
+-
+-	EnableSequence [
+-		cset "name='rt713-dmic FU1E Capture Switch' 1"
+-	]
+-
+-	DisableSequence [
+-		cset "name='rt713-dmic FU1E Capture Switch' 0"
+-	]
+-
+-	Value {
+-		CapturePriority 100
+-		CapturePCM "hw:${CardId},4"
+-		CaptureSwitch "rt713-dmic FU1E Capture Switch"
+-		CaptureVolume "rt713-dmic FU1E Capture Volume"
+-		CaptureMixerElem "rt713-dmic FU1E"
+-	}
+-}
+--- a/ucm2/sof-soundwire/rt713.conf
++++ b/ucm2/sof-soundwire/rt713.conf
+@@ -1,49 +1,87 @@
+ # Use case Configuration for sof-soundwire card
+ 
+-SectionDevice."Headphones" {
+-	Comment	"Headphones"
++If.codec_hs {
++	Condition {
++		Type RegexMatch
++		Regex "(rt713(-sdca)?)"
++		String "${var:HeadsetCodec1}"
++	}
++	True {
++		SectionDevice."Headphones" {
++			Comment	"Headphones"
+ 
+-	EnableSequence [
+-		cset "name='Headphone Switch' on"
+-	]
+-
+-	DisableSequence [
+-		cset "name='Headphone Switch' off"
+-	]
+-
+-	Value {
+-	      PlaybackPriority 200
+-	      PlaybackPCM "hw:${CardId}"
+-	      JackControl "Headphone Jack"
++			EnableSequence [
++				cset "name='Headphone Switch' on"
++			]
++
++			DisableSequence [
++				cset "name='Headphone Switch' off"
++			]
++
++			Value {
++			      PlaybackPriority 200
++			      PlaybackPCM "hw:${CardId}"
++			      JackControl "Headphone Jack"
++			}
++		}
++
++		SectionDevice."Headset" {
++			Comment "Headset Microphone"
++
++			EnableSequence [
++				cset "name='rt713 FU0F Capture Switch' 1"
++			]
++
++			DisableSequence [
++				cset "name='rt713 FU0F Capture Switch' 0"
++			]
++
++			Value {
++				CapturePriority 200
++				CapturePCM "hw:${CardId},1"
++				JackControl "Headset Mic Jack"
++				CaptureSwitch "rt713 FU0F Capture Switch"
++				CaptureVolume "rt713 FU0F Capture Volume"
++				CaptureMixerElem "rt713 FU0F"
++			}
++		}
+ 	}
+ }
+ 
+-SectionDevice."Headset" {
+-	Comment "Headset Microphone"
++If.codec_dmic {
++	Condition {
++		Type String
++		String1 "rt713-dmic"
++		String2 "${var:MicCodec1}"
++	}
++	True {
++		SectionDevice."Mic" {
++			Comment	"SoundWire microphones"
+ 
+-	EnableSequence [
+-		cset "name='rt713 FU0F Capture Switch' 1"
+-	]
+-
+-	DisableSequence [
+-		cset "name='rt713 FU0F Capture Switch' 0"
+-	]
+-
+-	Value {
+-		CapturePriority 200
+-		CapturePCM "hw:${CardId},1"
+-		JackControl "Headset Mic Jack"
+-		CaptureSwitch "rt713 FU0F Capture Switch"
+-		CaptureVolume "rt713 FU0F Capture Volume"
+-		CaptureMixerElem "rt713 FU0F"
++			EnableSequence [
++				cset "name='rt713-dmic FU1E Capture Switch' 1"
++			]
++
++			DisableSequence [
++				cset "name='rt713-dmic FU1E Capture Switch' 0"
++			]
++
++			Value {
++				CapturePriority 100
++				CapturePCM "hw:${CardId},4"
++				CaptureSwitch "rt713-dmic FU1E Capture Switch"
++				CaptureVolume "rt713-dmic FU1E Capture Volume"
++				CaptureMixerElem "rt713-dmic FU1E"
++			}
++		}
+ 	}
+ }
+ 
+-If.codecmic {
++If.codec_mic {
+ 	Condition {
+ 		Type String
+ 		String1 "rt713"
+-		String2 "${var:MultiMicShadow}"
++		String2 "${var:MicCodec1}"
+ 	}
+ 	True {
+ 		SectionDevice."Mic" {
+--- a/ucm2/sof-soundwire/rt721.conf
++++ b/ucm2/sof-soundwire/rt721.conf
+@@ -4,7 +4,7 @@
+ 	Condition {
+ 		Type RegexMatch
+ 		Regex "(rt721(-sdca)?)"
+-		String "${var:MultiMicShadow}"
++		String "${var:MicCodec1}"
+ 	}
+ 	True {
+ 		SectionDevice."Mic" {
+@@ -33,7 +33,7 @@
+ 	Condition {
+ 		Type RegexMatch
+ 		Regex "(rt721(-sdca)?)"
+-		String "${var:MultiSpeakerShadow}"
++		String "${var:SpeakerCodec1}"
+ 	}
+ 	True {
+ 		SectionDevice."Speaker" {
+--- a/ucm2/sof-soundwire/rt722.conf
++++ b/ucm2/sof-soundwire/rt722.conf
+@@ -4,7 +4,7 @@
+ 	Condition {
+ 		Type RegexMatch
+ 		Regex "(rt722(-sdca)?)"
+-		String "${var:MultiMicShadow}"
++		String "${var:MicCodec1}"
+ 	}
+ 	True {
+ 		SectionDevice."Mic" {
+@@ -33,7 +33,7 @@
+ 	Condition {
+ 		Type RegexMatch
+ 		Regex "(rt722(-sdca)?)"
+-		String "${var:MultiSpeakerShadow}"
++		String "${var:SpeakerCodec1}"
+ 	}
+ 	True {
+ 		SectionDevice."Speaker" {
+--- a/ucm2/sof-soundwire/sof-soundwire.conf
++++ b/ucm2/sof-soundwire/sof-soundwire.conf
+@@ -1,4 +1,4 @@
+-Syntax 7
++Syntax 8
+ 
+ SectionUseCase."HiFi" {
+ 	File "/sof-soundwire/HiFi.conf"
+@@ -18,6 +18,7 @@
+ 	Mics1 "0"
+ 	Iec61937Pcms1 ""
+ 	MultiCodec1 ""
++	MultiCodecRegex "rt712|rt713|rt721|rt722|rt1320"
+ }
+ 
+ DefineRegex {
+@@ -50,12 +51,19 @@
+ 		String "${CardComponents}"
+ 	}
+ 	MultiCodec {
+-		Regex "(rt712|rt713|rt721|rt722|rt1320)"
++		Regex "(${var:MultiCodecRegex})"
+ 		String "${var:SpeakerCodec1} ${var:HeadsetCodec1} ${var:MicCodec1}"
+ 	}
+ }
+ 
+-# check to keep combatibility with older kernels that have two separate spk: tags
++# set default file variables after regex evaluation
++If.codec_default.Append.Define {
++	SpeakerCodecFile "${var:SpeakerCodec1}"
++	MicCodecFile "${var:MicCodec1}"
++	HeadsetCodecFile "${var:HeadsetCodec1}"
++}
++
++# check to keep compatibility with older kernels that have two separate spk: tags
+ If.old_multi_spk {
+ 	Condition {
+ 		Type RegexMatch
+@@ -65,81 +73,117 @@
+ 	True.Define.SpeakerCodec1 "cs42l43-spk+cs35l56"
+ }
+ 
+-If.multi_init {
++DefineMacro.MultiCodecInit.If.a {
+ 	Condition {
+ 		Type String
+-		Empty "${var:MultiCodec1}"
++		# guard with "=" to not match the codec name in the middle
++		Haystack "=${var:SpeakerCodec1}=${var:HeadsetCodec1}=${var:MicCodec1}"
++		Needle "=${var:__CodecId}"
+ 	}
+-	False {
+-		Define {
+-			MultiSpeakerShadow "${var:SpeakerCodec1}"
+-			MultiMicShadow "${var:MicCodec1}"
++	True {
++		If.spk {
++			Condition {
++				Type RegexMatch
++				# guard with "=" to avoid empty string matching
++				Regex "=(${var:__CodecId}(-sdca)?)="
++				String "=${var:SpeakerCodec1}="
++			}
++			True.Define.SpeakerCodecFile "${var:__CodecId}"
++		}
++		If.headset {
++			Condition {
++				Type RegexMatch
++				# guard with "=" to avoid empty string matching
++				Regex "=(${var:__CodecId}(-sdca)?)="
++				String "=${var:HeadsetCodec1}="
++			}
++			True.Define.HeadsetCodecFile "${var:__CodecId}"
++		}
++		If.mic {
++			Condition {
++				Type RegexMatch
++				# guard with "=" to avoid empty string matching
++				Regex "=(${var:__CodecId}(-sdca|-dmic)?)="
++				String "=${var:MicCodec1}="
++			}
++			True.Define.MicCodecFile "${var:__CodecId}"
+ 		}
+-		Include.multi_init.File "/codecs/${var:MultiCodec1}/init.conf"
+ 	}
+ }
+ 
+-If.multi_speaker {
++# probe codecs with multiple functions, modify file variables
++If.multi_init {
+ 	Condition {
+-		Type RegexMatch
+-		# guard with "=" to avoid empty string matching
+-		Regex "=(${var:MultiCodec1}(-sdca)?)="
+-		String "=${var:SpeakerCodec1}="
++		Type String
++		Empty "${var:MultiCodec1}"
+ 	}
+-	True {
+-		Define.SpeakerCodec1 ""
++	False {
++		Macro.rt712.MultiCodecInit "CodecId=rt712"
++		Macro.rt713.MultiCodecInit "CodecId=rt713"
++		Macro.rt721.MultiCodecInit "CodecId=rt721"
++		Macro.rt722.MultiCodecInit "CodecId=rt722"
++		Macro.rt1320.MultiCodecInit "CodecId=rt1320"
+ 	}
+ }
+ 
+-If.multi_mic {
++If.spk {
+ 	Condition {
+-		Type RegexMatch
+-		# guard with "=" to avoid empty string matching
+-		Regex "=(${var:MultiCodec1}(-sdca)?)="
+-		String "=${var:MicCodec1}="
++		Type String
++		Empty "${var:SpeakerCodecFile}"
+ 	}
+-	True {
+-		Define.MicCodec1 ""
++	False.If.filter {
++		Condition {
++			Type RegexMatch
++			Regex "(${var:MultiCodecRegex}|rt1318|cs42l43-spk(\\+cs35l56)?|cs35l56((-bridge)|(\\+cs42l43-spk))?)"
++			String "${var:SpeakerCodecFile}"
++		}
++		True.Include.a.File "/codecs/${var:SpeakerCodecFile}/init.conf"
+ 	}
+ }
+ 
+-If.multi_headset {
++If.mic {
+ 	Condition {
+-		Type RegexMatch
+-		# guard with "=" to avoid empty string matching
+-		Regex "=(${var:MultiCodec1}(-sdca)?)="
+-		String "=${var:HeadsetCodec1}="
+-	}
+-	True {
+-		Define.HeadsetCodec1 ""
++		Type String
++		Empty "${var:MicCodecFile}"
+ 	}
+-}
+-
+-If.spk_init {
+-	Condition {
+-		Type RegexMatch
+-		Regex "(rt1318(-1)?|cs42l43-spk(\\+cs35l56)?|cs35l56((-bridge)|(\\+cs42l43-spk))?)"
+-		String "${var:SpeakerCodec1}"
++	False.If.dup {
++		Condition {
++			Type String
++			String1 "${var:MicCodecFile}"
++			String2 "${var:SpeakerCodecFile}"
++		}
++		False.If.filter {
++			Condition {
++				Type RegexMatch
++				Regex "(${var:MultiCodecRegex}|(acp|cs42l43|cs42l45|cs47l47)-dmic|rt715(-sdca)?)"
++				String "${var:MicCodecFile}"
++			}
++			True.Include.a.File "/codecs/${var:MicCodecFile}/init.conf"
++		}
+ 	}
+-	True.Include.spk_init.File "/codecs/${var:SpeakerCodec1}/init.conf"
+ }
+ 
+-If.hs_init {
++If.headset {
+ 	Condition {
+-		Type RegexMatch
+-		Regex "(cs42l43|cs42l45|rt5682|rt700|rt711|rt713(-sdca)?|rt722)"
+-		String "${var:HeadsetCodec1}"
++		Type String
++		Empty "${var:HeadsetCodecFile}"
+ 	}
+-	True.Include.hs_init.File "/codecs/${var:HeadsetCodec1}/init.conf"
+-}
+-
+-If.mic_init {
+-	Condition {
+-		Type RegexMatch
+-		Regex "((acp|cs42l43|cs42l45|rt712|rt713)-dmic|rt715(-sdca)?)"
+-		String "${var:MicCodec1}"
++	False.If.dup {
++		Condition {
++			Type String
++			# guard with "=" to avoid empty string matching
++			Needle "=${var:HeadsetCodecFile}="
++			Haystack "=${var:SpeakerCodecFile}=${var:MicCodecFile}="
++		}
++		False.If.filter {
++			Condition {
++				Type RegexMatch
++				Regex "(${var:MultiCodecRegex}|cs42l43|cs42l45|cs47l47|rt5682|rt700|rt711)"
++				String "${var:HeadsetCodecFile}"
++			}
++			True.Include.a.File "/codecs/${var:HeadsetCodecFile}/init.conf"
++		}
+ 	}
+-	True.Include.mic_init.File "/codecs/${var:MicCodec1}/init.conf"
+ }
+ 
+ If.mic_init_rt715 {

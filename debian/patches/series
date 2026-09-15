@@ -2,3 +2,17 @@
 0002-ucm2-add-PineTab-configuration.patch
 0003-ucm2-add-improved-Librem-5-profiles.patch
 lp2146747-ucm2-sof-soundwire-Add-support-for-CS42L43B-variant.patch
+lp2150196/0001-sof-soundwire-rt1320-add-playback-control-switch.patch
+lp2150196/0002-sof-soundwire-rt1320-add-rt1320-dmic-config.patch
+lp2150196/0003-sof-soundwire-add-rt722-into-hs_init.patch
+lp2146747-ucm2-sof-soundwire-cs42l43-support-UAJ-less-configur.patch
+lp2154151-Add-support-for-ASUS-Pro-ET900N-G3-Station-GB300.patch
+lp2154418/0001-ucm2-sof-soundwire-add-ACP-DMIC-configuration.patch
+lp2154418/0001-sof-soundwire-add-companion-amp-config-with-rt721-an.patch
+lp2154418/0001-ucm2-rt722-add-speaker-mute-LED-and-PlaybackSwitch-f.patch
+lp2154418/0001-ucm2-sof-soundwire-cs42l43-Separate-init-handling-of.patch
+lp2154418/0001-ucm2-sof-soundwire-add-combined-cs42l43-spk-cs35l56-.patch
+lp2154418/0001-ucm2-sof-soundwire-add-Mic-LED-control-for-ACP-PDM-D.patch
+lp2159957-rt713-rt1320-fix-input-output.patch
+lp2164729-ucm2-sof-soundwire-Add-tas2783-support.patch
+lp2164728-USB-Audio-ALC4080-Update-NVIDIA-DGX-front-mic-jack-n.patch

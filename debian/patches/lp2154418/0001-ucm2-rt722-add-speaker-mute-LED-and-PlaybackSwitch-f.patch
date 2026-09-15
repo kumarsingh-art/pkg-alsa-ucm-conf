@@ -1,0 +1,55 @@
+From 7fd1a77ddbc772898a29d9bdd8cb1dcad991f7a5 Mon Sep 17 00:00:00 2001
+From: Aaron Ma <aaron.ma@canonical.com>
+Date: Thu, 23 Apr 2026 13:00:50 +0800
+Subject: [PATCH] ucm2: rt722: add speaker mute LED and PlaybackSwitch for FU06
+
+Attach rt722 FU06 Playback Switch to the speaker mute LED via SetLED
+in init.conf, and declare PlaybackSwitch in the Speaker device so
+PipeWire can toggle hardware mute.
+
+Closes: https://github.com/alsa-project/alsa-ucm-conf/pull/753
+Link: https://lore.kernel.org/linux-sound/20260423101338.1040131-1-aaron.ma@canonical.com/
+Signed-off-by: Aaron Ma <aaron.ma@canonical.com>
+Signed-off-by: Jaroslav Kysela <perex@perex.cz>
+Origin: upstream, https://github.com/alsa-project/alsa-ucm-conf/commit/7fd1a77ddbc772898a29d9bdd8cb1dcad991f7a5
+Bug-Ubuntu: https://bugs.launchpad.net/bugs/2154418
+---
+ ucm2/codecs/rt722/init.conf   | 9 +++++++++
+ ucm2/sof-soundwire/rt722.conf | 1 +
+ 2 files changed, 10 insertions(+)
+
+diff --git a/ucm2/codecs/rt722/init.conf b/ucm2/codecs/rt722/init.conf
+index 40f2458..7275ce5 100644
+--- a/ucm2/codecs/rt722/init.conf
++++ b/ucm2/codecs/rt722/init.conf
+@@ -10,6 +10,15 @@ BootSequence [
+ 	cset "name='rt722 FU0F Capture Volume' 63"
+ ]
+ 
++If.spk_init_rt722 {
++	Condition {
++		Type String
++		Needle "rt722"
++		Haystack "${var:SpeakerCodec1}"
++	}
++	True.Macro [{ SetLED { LED="speaker" Action="attach" CtlId="rt722 FU06 Playback Switch" } }]
++}
++
+ If.mic_init_rt722 {
+ 	Condition {
+ 		Type String
+diff --git a/ucm2/sof-soundwire/rt722.conf b/ucm2/sof-soundwire/rt722.conf
+index a4a431b..00e143c 100644
+--- a/ucm2/sof-soundwire/rt722.conf
++++ b/ucm2/sof-soundwire/rt722.conf
+@@ -51,6 +51,7 @@ If.codecspk {
+ 				PlaybackPriority 100
+ 				PlaybackPCM "hw:${CardId},2"
+ 				PlaybackMixerElem "rt722 FU06"
++				PlaybackSwitch "rt722 FU06 Playback Switch"
+ 				PlaybackVolume "rt722 FU06 Playback Volume"
+ 			}
+ 		}
+-- 
+2.43.0
+

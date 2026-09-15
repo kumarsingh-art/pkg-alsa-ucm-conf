@@ -1,0 +1,74 @@
+From d83bf7bbba3054f41e6898ed70aa6f0ab93e226d Mon Sep 17 00:00:00 2001
+From: Derek Fang <derek.fang@realtek.com>
+Date: Thu, 23 Jul 2026 14:56:00 +0800
+Subject: [PATCH] USB-Audio: ALC4080: Update NVIDIA DGX front mic jack name
+
+The ALC4080 codec in NVIDIA DGX exposes the front microphone as the
+dedicated "Front Mic - Input Jack" terminal. Use this terminal instead
+of the indexed "Mic - Input Jack",index=1 control, which PipeWire
+rejects and therefore cannot use to track front-mic availability.
+
+This patch redefines Mic1 according to the codec firmware with the
+front mic's terminal name.
+
+Closes: https://github.com/alsa-project/alsa-ucm-conf/pull/821
+Signed-off-by: Derek Fang <derek.fang@realtek.com>
+Signed-off-by: Jaroslav Kysela <perex@perex.cz>
+
+Origin: upstream, https://github.com/alsa-project/alsa-ucm-conf/commit/406fda83a1bdcd67c7b203d7c078880ada6eaba2
+Bug-Ubuntu: https://bugs.launchpad.net/bugs/2164728
+---
+ ucm2/USB-Audio/Realtek/ALC4080-HiFi.conf | 37 ++++++++++++++++--------
+ 1 file changed, 25 insertions(+), 12 deletions(-)
+
+diff --git a/ucm2/USB-Audio/Realtek/ALC4080-HiFi.conf b/ucm2/USB-Audio/Realtek/ALC4080-HiFi.conf
+index 0614294..7e4b60b 100644
+--- a/ucm2/USB-Audio/Realtek/ALC4080-HiFi.conf
++++ b/ucm2/USB-Audio/Realtek/ALC4080-HiFi.conf
+@@ -178,18 +178,31 @@ If.nvidia-dgx-station {
+ 		String "${CardComponents}"
+ 		Regex "USB(0955:cf0a)"
+ 	}
+-	True.Define {
+-		HeadphonesName "Front Line Out"
+-		Mic1Name "Front Microphone"
+-		Mic1Mindex "1"
+-		Mic1Jack "name='Mic - Input Jack',index=1"
+-		Mic2Name "Rear Microphone"
+-		Mic2Mixer "Mic"
+-		Mic2Mindex "0"
+-		Mic2Jack "Mic - Input Jack"
+-		Mic2PCM "hw:${CardId}"
+-		Line1Name "Rear Line Input"
+-		SpdifName ""
++	True {
++		Define {
++			HeadphonesName "Front Line Out"
++			Mic1Name "Front Microphone"
++			Mic1Mindex "1"
++			Mic1Jack "name='Mic - Input Jack',index=1"
++			Mic2Name "Rear Microphone"
++			Mic2Mixer "Mic"
++			Mic2Jack "Mic - Input Jack"
++			Mic2PCM "hw:${CardId}"
++			Line1Name "Rear Line Input"
++			SpdifName ""
++		}
++
++		If.front_mic_jack {
++			Condition {
++				Type ControlExists
++				Control "iface=CARD,name='Front Mic - Input Jack'"
++			}
++			True.Define {
++				Mic1Mixer "Front Mic"
++				Mic1Mindex "0"
++				Mic1Jack "Front Mic - Input Jack"
++			}
++		}
+ 	}
+ }
+ 
+-- 
+2.43.0
+

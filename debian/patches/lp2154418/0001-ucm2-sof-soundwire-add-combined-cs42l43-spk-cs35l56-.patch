@@ -1,0 +1,141 @@
+From 980fb83651e82c3e53d3a0ab7fa9b7d6fc2d809b Mon Sep 17 00:00:00 2001
+From: Maciej Strozek <mstrozek@opensource.cirrus.com>
+Date: Wed, 15 Apr 2026 13:47:06 +0100
+Subject: [PATCH] ucm2: sof-soundwire: add combined cs42l43-spk+cs35l56 config
+
+In some systems cs42l43-spk and cs35l56 can be used simultaneously to
+drive seprate speakers (e.g. tweeters and woofers), add a configuration
+to support that.
+
+Closes: https://github.com/alsa-project/alsa-ucm-conf/pull/748
+Link: https://lore.kernel.org/all/20260417144529.2385360-1-mstrozek@opensource.cirrus.com/
+Signed-off-by: Maciej Strozek <mstrozek@opensource.cirrus.com>
+Signed-off-by: Jaroslav Kysela <perex@perex.cz>
+Origin: upstream, https://github.com/alsa-project/alsa-ucm-conf/commit/980fb83651e82c3e53d3a0ab7fa9b7d6fc2d809b
+Bug-Ubuntu: https://bugs.launchpad.net/bugs/2154418
+---
+ ucm2/codecs/cs35l56+cs42l43-spk             |  1 +
+ ucm2/codecs/cs42l43-spk+cs35l56/init.conf   | 42 +++++++++++++++++++++
+ ucm2/sof-soundwire/cs35l56+cs42l43-spk.conf |  1 +
+ ucm2/sof-soundwire/cs42l43-spk+cs35l56.conf |  1 +
+ ucm2/sof-soundwire/sof-soundwire.conf       | 14 ++++++-
+ 5 files changed, 57 insertions(+), 2 deletions(-)
+ create mode 120000 ucm2/codecs/cs35l56+cs42l43-spk
+ create mode 100644 ucm2/codecs/cs42l43-spk+cs35l56/init.conf
+ create mode 120000 ucm2/sof-soundwire/cs35l56+cs42l43-spk.conf
+ create mode 120000 ucm2/sof-soundwire/cs42l43-spk+cs35l56.conf
+
+diff --git a/ucm2/codecs/cs35l56+cs42l43-spk b/ucm2/codecs/cs35l56+cs42l43-spk
+new file mode 120000
+index 0000000..6f81756
+--- /dev/null
++++ b/ucm2/codecs/cs35l56+cs42l43-spk
+@@ -0,0 +1 @@
++cs42l43-spk+cs35l56
+\ No newline at end of file
+diff --git a/ucm2/codecs/cs42l43-spk+cs35l56/init.conf b/ucm2/codecs/cs42l43-spk+cs35l56/init.conf
+new file mode 100644
+index 0000000..c3ff43e
+--- /dev/null
++++ b/ucm2/codecs/cs42l43-spk+cs35l56/init.conf
+@@ -0,0 +1,42 @@
++# cs42l43+cs35l56 specific control settings
++#
++# Arguments:
++#   Amp - amplifier number 1-8
++#
++DefineMacro.cs35l56spkInit.If.0 {
++	Condition {
++		Type ControlExists
++		Control "name='AMP${var:__Amp} Speaker Switch'"
++	}
++	True {
++		LibraryConfig.remap.Config.ctl.default.map {
++			"name='cs42l43 Speaker Playback Switch'" {
++				"name='AMP${var:__Amp} Speaker Switch'".vindex.0 0
++			}
++		}
++		FixedBootSequence [
++			cset "name='AMP${var:__Amp} Speaker Switch' 0"
++		]
++		Macro [{ SetLED { LED="speaker" Action="attach" CtlId="AMP${var:__Amp} Speaker Switch" } }]
++	}
++}
++
++LibraryConfig.remap.Config {
++	ctl.default.map {
++		"name='cs42l43 Speaker Playback Switch'" {
++			"name='cs42l43 Speaker Digital Switch'".vindex.0 [ 0 1 ]
++		}
++	}
++}
++
++Macro [
++	{ SetLED { LED="speaker" Action="attach" CtlId="cs42l43 Speaker Digital Switch" } }
++	{ cs35l56spkInit { Amp 1 } }
++	{ cs35l56spkInit { Amp 2 } }
++	{ cs35l56spkInit { Amp 3 } }
++	{ cs35l56spkInit { Amp 4 } }
++	{ cs35l56spkInit { Amp 5 } }
++	{ cs35l56spkInit { Amp 6 } }
++	{ cs35l56spkInit { Amp 7 } }
++	{ cs35l56spkInit { Amp 8 } }
++]
+diff --git a/ucm2/sof-soundwire/cs35l56+cs42l43-spk.conf b/ucm2/sof-soundwire/cs35l56+cs42l43-spk.conf
+new file mode 120000
+index 0000000..93e49c3
+--- /dev/null
++++ b/ucm2/sof-soundwire/cs35l56+cs42l43-spk.conf
+@@ -0,0 +1 @@
++cs42l43-spk.conf
+\ No newline at end of file
+diff --git a/ucm2/sof-soundwire/cs42l43-spk+cs35l56.conf b/ucm2/sof-soundwire/cs42l43-spk+cs35l56.conf
+new file mode 120000
+index 0000000..93e49c3
+--- /dev/null
++++ b/ucm2/sof-soundwire/cs42l43-spk+cs35l56.conf
+@@ -0,0 +1 @@
++cs42l43-spk.conf
+\ No newline at end of file
+diff --git a/ucm2/sof-soundwire/sof-soundwire.conf b/ucm2/sof-soundwire/sof-soundwire.conf
+index 0a2c15d..1eb930e 100644
+--- a/ucm2/sof-soundwire/sof-soundwire.conf
++++ b/ucm2/sof-soundwire/sof-soundwire.conf
+@@ -22,7 +22,7 @@ Define {
+ 
+ DefineRegex {
+ 	SpeakerCodec {
+-		Regex " spk:([a-z0-9]+((-sdca)|(-spk)|(-bridge))?(\\+[a-z0-9]+)?)"
++		Regex " spk:([a-z0-9]+((-sdca)|(-spk)|(-bridge))?(\\+[a-z0-9]+((-spk)?))?)"
+ 		String "${CardComponents}"
+ 	}
+ 	SpeakerChannels {
+@@ -55,6 +55,16 @@ DefineRegex {
+ 	}
+ }
+ 
++# check to keep combatibility with older kernels that have two separate spk: tags
++If.old_multi_spk {
++	Condition {
++		Type RegexMatch
++		Regex "(spk:cs42l43-spk .*spk:cs35l56( |$))|(spk:cs35l56 .*spk:cs42l43-spk( |$))"
++		String "${CardComponents}"
++	}
++	True.Define.SpeakerCodec1 "cs42l43-spk+cs35l56"
++}
++
+ If.multi_init {
+ 	Condition {
+ 		Type String
+@@ -108,7 +118,7 @@ If.multi_headset {
+ If.spk_init {
+ 	Condition {
+ 		Type RegexMatch
+-		Regex "(rt1318(-1)?|cs42l43-spk|cs35l56(-bridge)?)"
++		Regex "(rt1318(-1)?|cs42l43-spk(\\+cs35l56)?|cs35l56((-bridge)|(\\+cs42l43-spk))?)"
+ 		String "${var:SpeakerCodec1}"
+ 	}
+ 	True.Include.spk_init.File "/codecs/${var:SpeakerCodec1}/init.conf"
+-- 
+2.43.0
+

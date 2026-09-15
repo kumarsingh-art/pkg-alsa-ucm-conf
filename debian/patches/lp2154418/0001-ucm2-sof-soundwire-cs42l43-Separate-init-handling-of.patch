@@ -1,0 +1,81 @@
+From dd191521cb1d553c3e670323c97c8a6052d0b861 Mon Sep 17 00:00:00 2001
+From: Maciej Strozek <mstrozek@opensource.cirrus.com>
+Date: Wed, 15 Apr 2026 13:26:17 +0100
+Subject: [PATCH] ucm2: sof-soundwire: cs42l43: Separate init handling of
+ speaker and headset
+
+Since cs42l43 can be used without UAJ, make sure the speakers can be
+initialised separately. Complements [1] and add a possible speaker mute
+LED bind.
+
+Closes: https://github.com/alsa-project/alsa-ucm-conf/pull/748
+Link: https://github.com/alsa-project/alsa-ucm-conf/pull/738 [1]
+Signed-off-by: Maciej Strozek <mstrozek@opensource.cirrus.com>
+Signed-off-by: Jaroslav Kysela <perex@perex.cz>
+Origin: upstream, https://github.com/alsa-project/alsa-ucm-conf/commit/dd191521cb1d553c3e670323c97c8a6052d0b861
+Bug-Ubuntu: https://bugs.launchpad.net/bugs/2154418
+---
+ ucm2/codecs/cs42l43-spk/init.conf     | 14 ++++++++++++++
+ ucm2/codecs/cs42l43/init.conf         |  6 +-----
+ ucm2/sof-soundwire/sof-soundwire.conf |  2 +-
+ 3 files changed, 16 insertions(+), 6 deletions(-)
+ create mode 100644 ucm2/codecs/cs42l43-spk/init.conf
+
+diff --git a/ucm2/codecs/cs42l43-spk/init.conf b/ucm2/codecs/cs42l43-spk/init.conf
+new file mode 100644
+index 0000000..1c0e31c
+--- /dev/null
++++ b/ucm2/codecs/cs42l43-spk/init.conf
+@@ -0,0 +1,14 @@
++# cs42l43-spk specific control settings
++
++LibraryConfig.remap.Config {
++	ctl.default.map {
++		"name='cs42l43 Speaker Playback Switch'" {
++			"name='cs42l43 Speaker Digital Switch'".vindex.0 0
++			"name='cs42l43 Speaker Digital Switch'".vindex.1 1
++		}
++	}
++}
++
++Macro [
++	{ SetLED { LED="speaker" Action="attach" CtlId="cs42l43 Speaker Digital Switch" } }
++]
+\ No newline at end of file
+diff --git a/ucm2/codecs/cs42l43/init.conf b/ucm2/codecs/cs42l43/init.conf
+index 7fa9cf1..730da6a 100644
+--- a/ucm2/codecs/cs42l43/init.conf
++++ b/ucm2/codecs/cs42l43/init.conf
+@@ -1,4 +1,4 @@
+-# cs42l43 specific control settings
++# cs42l43-hs specific control settings
+ 
+ LibraryConfig.remap.Config {
+ 	ctl.default.map {
+@@ -8,10 +8,6 @@ LibraryConfig.remap.Config {
+ 		"name='cs42l43 Headset Microphone Capture Volume'" {
+ 			"name='cs42l43 Decimator 1 Volume'".vindex.0 0
+ 		}
+-		"name='cs42l43 Speaker Playback Switch'" {
+-			"name='cs42l43 Speaker Digital Switch'".vindex.0 0
+-			"name='cs42l43 Speaker Digital Switch'".vindex.1 1
+-		}
+ 	}
+ }
+ 
+diff --git a/ucm2/sof-soundwire/sof-soundwire.conf b/ucm2/sof-soundwire/sof-soundwire.conf
+index a32ba43..0a2c15d 100644
+--- a/ucm2/sof-soundwire/sof-soundwire.conf
++++ b/ucm2/sof-soundwire/sof-soundwire.conf
+@@ -108,7 +108,7 @@ If.multi_headset {
+ If.spk_init {
+ 	Condition {
+ 		Type RegexMatch
+-		Regex "(rt1318(-1)?|cs35l56(-bridge)?)"
++		Regex "(rt1318(-1)?|cs42l43-spk|cs35l56(-bridge)?)"
+ 		String "${var:SpeakerCodec1}"
+ 	}
+ 	True.Include.spk_init.File "/codecs/${var:SpeakerCodec1}/init.conf"
+-- 
+2.43.0
+

@@ -1,0 +1,33 @@
+From 70d2463dc303ed35881ead0e6653b2cf245d8bf5 Mon Sep 17 00:00:00 2001
+From: derek fang <derek.fang@realtek.com>
+Date: Mon, 30 Mar 2026 16:15:49 +0800
+Subject: [PATCH 3/3] sof-soundwire: add rt722 into hs_init
+
+Load rt722/init.conf while using rt722 headset function only
+instead of multicodec.
+
+Closes: https://github.com/alsa-project/alsa-ucm-conf/pull/743
+Signed-off-by: derek fang <derek.fang@realtek.com>
+Signed-off-by: Jaroslav Kysela <perex@perex.cz>
+Origin: backport, https://github.com/alsa-project/alsa-ucm-conf/commit/70d2463dc303ed35881ead0e6653b2cf245d8bf5
+Bug-Ubuntu: https://bugs.launchpad.net/bugs/2150196
+---
+ ucm2/sof-soundwire/sof-soundwire.conf | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/ucm2/sof-soundwire/sof-soundwire.conf b/ucm2/sof-soundwire/sof-soundwire.conf
+index e48f474..a32ba43 100644
+--- a/ucm2/sof-soundwire/sof-soundwire.conf
++++ b/ucm2/sof-soundwire/sof-soundwire.conf
+@@ -117,7 +117,7 @@ If.spk_init {
+ If.hs_init {
+ 	Condition {
+ 		Type RegexMatch
+-		Regex "(cs42l43|cs42l45|rt5682|rt700|rt711|rt713(-sdca)?)"
++		Regex "(cs42l43|cs42l45|rt5682|rt700|rt711|rt713(-sdca)?|rt722)"
+ 		String "${var:HeadsetCodec1}"
+ 	}
+ 	True.Include.hs_init.File "/codecs/${var:HeadsetCodec1}/init.conf"
+-- 
+2.43.0
+

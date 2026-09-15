@@ -1,0 +1,71 @@
+From 7585f5e9671a3ac904b88bf0803e696f3e539922 Mon Sep 17 00:00:00 2001
+From: Maciej Strozek <mstrozek@opensource.cirrus.com>
+Date: Mon, 6 Apr 2026 13:59:39 +0100
+Subject: [PATCH] ucm2: sof-soundwire: cs42l43: support UAJ-less configuration
+
+In some cases cs42l43/cs42l43b devices can be set up without UAJ. In
+this case, guard the ConflictingDevices behind a check for a cs42l43's
+headset's presence so the UCM can still load even if the headset is
+missing.
+
+Closes: https://github.com/alsa-project/alsa-ucm-conf/pull/738
+Signed-off-by: Maciej Strozek <mstrozek@opensource.cirrus.com>
+Signed-off-by: Jaroslav Kysela <perex@perex.cz>
+Origin: upstream, https://github.com/alsa-project/alsa-ucm-conf/commit/7585f5e9671a3ac904b88bf0803e696f3e539922
+Bug-Ubuntu: https://bugs.launchpad.net/bugs/2146747
+---
+ ucm2/sof-soundwire/cs42l43-dmic.conf | 13 ++++++++++---
+ ucm2/sof-soundwire/cs42l43-spk.conf  | 13 ++++++++++---
+ 2 files changed, 20 insertions(+), 6 deletions(-)
+
+diff --git a/ucm2/sof-soundwire/cs42l43-dmic.conf b/ucm2/sof-soundwire/cs42l43-dmic.conf
+index c0b622c..0bada32 100644
+--- a/ucm2/sof-soundwire/cs42l43-dmic.conf
++++ b/ucm2/sof-soundwire/cs42l43-dmic.conf
+@@ -3,9 +3,16 @@
+ SectionDevice."Mic" {
+ 	Comment "Microphones"
+ 
+-	ConflictingDevice [
+-		"Headset"
+-	]
++	If.hs_present {
++		Condition {
++			Type String
++			Haystack "${var:HeadsetCodec1}"
++			Needle "cs42l43"
++		}
++		True.ConflictingDevice [
++			"Headset"
++		]
++	}
+ 
+ 	DisableSequence [
+ 		cset "name='cs42l43 DP1TX1 Input' 'None'"
+diff --git a/ucm2/sof-soundwire/cs42l43-spk.conf b/ucm2/sof-soundwire/cs42l43-spk.conf
+index 48efa51..1d09f6c 100644
+--- a/ucm2/sof-soundwire/cs42l43-spk.conf
++++ b/ucm2/sof-soundwire/cs42l43-spk.conf
+@@ -3,9 +3,16 @@
+ SectionDevice."Speaker" {
+ 	Comment "Speaker"
+ 
+-	ConflictingDevice [
+-		"Headphones"
+-	]
++	If.hs_present {
++		Condition {
++			Type String
++			Haystack "${var:HeadsetCodec1}"
++			Needle "cs42l43"
++		}
++		True.ConflictingDevice [
++			"Headphones"
++		]
++	}
+ 
+ 	EnableSequence [
+ 		cset "name='cs42l43 Speaker L Input 1' 'DP6RX1'"
+-- 
+2.43.0
+

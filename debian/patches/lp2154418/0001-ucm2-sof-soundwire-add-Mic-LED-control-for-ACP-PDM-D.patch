@@ -1,0 +1,57 @@
+From e8737afe38dc6e87578cb28256427ee53a183f53 Mon Sep 17 00:00:00 2001
+From: Jaroslav Kysela <perex@perex.cz>
+Date: Wed, 6 May 2026 18:12:47 +0200
+Subject: [PATCH] ucm2: sof-soundwire: add Mic LED control for ACP PDM DMIC
+
+Like for SOF HDA, add software defined Mic LED switch control with
+Mic LED bindings.
+
+Fixes: https://github.com/alsa-project/alsa-ucm-conf/issues/752
+Signed-off-by: Jaroslav Kysela <perex@perex.cz>
+Origin: backport, https://github.com/alsa-project/alsa-ucm-conf/commit/e8737afe38dc6e87578cb28256427ee53a183f53
+Bug-Ubuntu: https://bugs.launchpad.net/bugs/2154418
+---
+ ucm2/codecs/acp-dmic/init.conf        | 4 ++++
+ ucm2/sof-soundwire/acp-dmic.conf      | 2 ++
+ ucm2/sof-soundwire/sof-soundwire.conf | 2 +-
+ 3 files changed, 7 insertions(+), 1 deletion(-)
+ create mode 100644 ucm2/codecs/acp-dmic/init.conf
+
+diff --git a/ucm2/codecs/acp-dmic/init.conf b/ucm2/codecs/acp-dmic/init.conf
+new file mode 100644
+index 0000000..d2a4867
+--- /dev/null
++++ b/ucm2/codecs/acp-dmic/init.conf
+@@ -0,0 +1,4 @@
++Macro [
++	{ CtlNew { Arg="name='Mic ACP LED Capture Switch' type=bool,count=1 off" } }
++	{ SetLED { LED="mic" Action="attach" CtlId="Mic ACP LED Capture Switch" } }
++]
+diff --git a/ucm2/sof-soundwire/acp-dmic.conf b/ucm2/sof-soundwire/acp-dmic.conf
+index 342fff0..ebdc302 100644
+--- a/ucm2/sof-soundwire/acp-dmic.conf
++++ b/ucm2/sof-soundwire/acp-dmic.conf
+@@ -4,5 +4,7 @@ SectionDevice."Mic" {
+ 	Value {
+ 		CapturePriority 100
+ 		CapturePCM "hw:${CardId},4"
++		CaptureMixerElem "Mic ACP LED"
++		CaptureSwitch "Mic ACP LED Capture Switch"
+ 	}
+ }
+diff --git a/ucm2/sof-soundwire/sof-soundwire.conf b/ucm2/sof-soundwire/sof-soundwire.conf
+index 1eb930e..1842e2a 100644
+--- a/ucm2/sof-soundwire/sof-soundwire.conf
++++ b/ucm2/sof-soundwire/sof-soundwire.conf
+@@ -136,7 +136,7 @@ If.hs_init {
+ If.mic_init {
+ 	Condition {
+ 		Type RegexMatch
+-		Regex "(cs42l43-dmic|cs42l45-dmic|rt712-dmic|rt713-dmic|rt715(-sdca)?)"
++		Regex "((acp|cs42l43|cs42l45|rt712|rt713)-dmic|rt715(-sdca)?)"
+ 		String "${var:MicCodec1}"
+ 	}
+ 	True.Include.mic_init.File "/codecs/${var:MicCodec1}/init.conf"
+-- 
+2.43.0
+
