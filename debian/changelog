@@ -1,3 +1,9 @@
+alsa-ucm-conf (1.2.15.3-1ubuntu1.7qcom1) UNRELEASED; urgency=medium
+
+  * Update gbp.conf for Qualcomm changes to Ubuntu resolute.
+
+ -- Loïc Minier <loic.minier@oss.qualcomm.com>  Tue, 27 Oct 2026 11:00:10 +0000
+
 alsa-ucm-conf (1.2.15.3-1ubuntu1.7) resolute; urgency=medium
 
   [ Dirk Su ]
